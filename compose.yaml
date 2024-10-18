@@ -1,0 +1,29 @@
+services:
+  app:
+    image: 'studentmanagement:latest'
+    build:
+      context: .
+    container_name: app
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=test1234
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/studentManagementDB
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=test1234
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
+      - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
+
+    ports:
+      - 8080:8080
+  db:
+    image: 'postgres:latest'
+    container_name: db
+    environment:
+      - POSTGRES_DB=studentManagementDB
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=test1234
+    ports:
+      - 54320:5432
