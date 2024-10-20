@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 import org.studentmanagement.data.entities.ClassEntity;
 
 @Repository
-public interface ClassRepository extends CrudRepository<ClassEntity, Integer> {
+public interface ClassRepository extends CrudRepository<ClassEntity, Long> {
 }

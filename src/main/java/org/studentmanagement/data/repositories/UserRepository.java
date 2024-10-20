@@ -6,4 +6,5 @@ import org.studentmanagement.data.entities.UserEntity;
 
 @Repository
 public interface UserRepository extends CrudRepository<UserEntity, Long> {
+    Boolean existsByUsername(String username);
 }

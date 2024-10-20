@@ -9,8 +9,9 @@ import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
-import org.studentmanagement.exceptions.UserNotFoundException;
 import org.studentmanagement.services.UserService;
+
+import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("user")
@@ -31,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping("/{userID}")
-    public ResponseEntity<UserViewModel> getUser(@PathVariable Long userID) throws UserNotFoundException {
+    public ResponseEntity<UserViewModel> getUser(@PathVariable Long userID) throws NoSuchElementException {
         UserViewModel userViewModel = userService.getUserByID(userID);
         return new ResponseEntity<>(userViewModel, HttpStatus.OK);
     }

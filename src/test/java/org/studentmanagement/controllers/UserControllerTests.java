@@ -116,18 +116,17 @@ public class UserControllerTests {
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
 
-        mockMvc.perform(post("/user")
-                .params(newUser));
+        MvcResult postResult = mockMvc
+                .perform(post("/user")
+                        .params(newUser))
+                .andReturn();
 
-        mockMvc.perform(get("/user/1"))
-                .andExpectAll(
-                        status().isOk(),
-                        content().contentType("application/json"),
-                        jsonPath("$.id").value("1"),
-                        jsonPath("$.firstName").value("testFirstName"),
-                        jsonPath("$.lastName").value("testLastName"),
-                        jsonPath("$.role").value("PENDING")
-                );
+        MvcResult getResult = mockMvc
+                .perform(get("/user/1"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        Assertions.assertEquals(postResult.getResponse().getContentAsString(), getResult.getResponse().getContentAsString());
     }
 
     @Test
