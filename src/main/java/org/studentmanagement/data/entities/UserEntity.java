@@ -17,13 +17,13 @@ import org.studentmanagement.data.enums.RoleEnum;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserEntity extends BaseEntity {
-    @NotBlank
-    @Length(min = 3)
+    @NotBlank(message = "Username should not be empty")
+    @Length(min = 3, message = "Username should have at least 3 symbols")
     @Column(unique = true)
     private String username;
-    @NotBlank
+    @NotBlank(message = "First name should not be empty")
     private String firstName;
-    @NotBlank
+    @NotBlank(message = "Last name should not be empty")
     private String lastName;
     @NonNull
     @Enumerated

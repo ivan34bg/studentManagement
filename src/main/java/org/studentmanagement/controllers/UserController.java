@@ -7,6 +7,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.exceptions.FieldConstraintViolationException;
+import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
 import org.studentmanagement.exceptions.UserNotFoundException;
 import org.studentmanagement.services.UserService;
 
@@ -21,7 +23,9 @@ public class UserController {
     }
 
     @PostMapping()
-    public ResponseEntity<UserViewModel> registerUser(@ModelAttribute RegisterUserBindingModel userBindingModel) {
+    public ResponseEntity<UserViewModel> registerUser(@ModelAttribute RegisterUserBindingModel userBindingModel)
+            throws UserEntityUniqueConstraintViolationException,
+            FieldConstraintViolationException {
         UserViewModel userViewModel = userService.registerUser(userBindingModel);
         return new ResponseEntity<>(userViewModel, HttpStatus.CREATED);
     }

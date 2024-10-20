@@ -8,8 +8,18 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandling {
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
+    public ResponseEntity<Void> handleUserNotFoundException(UserNotFoundException ex) {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserEntityUniqueConstraintViolationException.class)
+    public ResponseEntity<Void> handleUserEntitySaveFailureException(UserEntityUniqueConstraintViolationException ex) {
+        return new ResponseEntity<>(HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(FieldConstraintViolationException.class)
+    public ResponseEntity<String[]> handleFieldConstraintViolationException(FieldConstraintViolationException ex) {
+        return new ResponseEntity<>(ex.getMessages(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
