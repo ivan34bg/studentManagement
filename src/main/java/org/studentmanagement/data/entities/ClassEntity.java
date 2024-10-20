@@ -18,7 +18,7 @@ import java.util.Arrays;
 @NoArgsConstructor
 public class ClassEntity extends BaseEntity {
     @Column(unique = true)
-    @NotBlank
+    @NotBlank(message = "Title should not be empty")
     private String title;
     private String description;
     @ManyToOne
