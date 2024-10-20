@@ -5,10 +5,13 @@ import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
-import org.studentmanagement.exceptions.UserNotFoundException;
+
+import java.util.NoSuchElementException;
 
 @Service
 public interface UserService {
-    UserViewModel registerUser(RegisterUserBindingModel userBindingModel) throws UserEntityUniqueConstraintViolationException, FieldConstraintViolationException;
-    UserViewModel getUserByID(Long id) throws UserNotFoundException;
+    UserViewModel registerUser(RegisterUserBindingModel userBindingModel)
+            throws UserEntityUniqueConstraintViolationException,
+            FieldConstraintViolationException;
+    UserViewModel getUserByID(Long id) throws NoSuchElementException;
 }

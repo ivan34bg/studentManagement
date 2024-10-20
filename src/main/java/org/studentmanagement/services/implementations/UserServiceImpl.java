@@ -6,7 +6,6 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.entities.UserEntity;
@@ -15,11 +14,9 @@ import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.UserViewModel;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
-import org.studentmanagement.exceptions.UserNotFoundException;
 import org.studentmanagement.services.UserService;
 
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
@@ -53,11 +50,11 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserViewModel saveUserEntity(UserEntity userEntity) throws UserEntityUniqueConstraintViolationException {
-        try {
+        if (userRepository.existsByUsername(userEntity.getUsername())) {
+            throw new UserEntityUniqueConstraintViolationException();
+        } else {
             UserEntity savedUser = userRepository.save(userEntity);
             return modelMapper.map(savedUser, UserViewModel.class);
-        } catch (DataIntegrityViolationException e) {
-            throw new UserEntityUniqueConstraintViolationException();
         }
     }
 
@@ -69,13 +66,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserViewModel getUserByID(Long id) throws UserNotFoundException {
-        Optional<UserEntity> user = userRepository.findById(id);
-
-        if (user.isPresent()) {
-            return modelMapper.map(user.get(), UserViewModel.class);
-        }
-
-        throw new UserNotFoundException();
+    public UserViewModel getUserByID(Long id) throws NoSuchElementException {
+        UserEntity user = userRepository.findById(id).orElseThrow(NoSuchElementException::new);
+        return modelMapper.map(user, UserViewModel.class);
     }
 }
