@@ -6,10 +6,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.studentmanagement.data.bindingModels.AddClassBindingModel;
 import org.studentmanagement.data.viewModels.ClassViewModel;
+import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
+import org.studentmanagement.exceptions.RoleRequirementViolationException;
 import org.studentmanagement.services.ClassService;
-
-import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/class")
@@ -23,14 +23,27 @@ public class ClassController {
     @PostMapping()
     public ResponseEntity<ClassViewModel> addClass(@ModelAttribute AddClassBindingModel classBindingModel)
             throws FieldConstraintViolationException {
-        ClassViewModel viewModel = classService.addClass(classBindingModel);
-        return new ResponseEntity<>(viewModel, HttpStatus.CREATED);
+        ClassViewModel classViewModel = classService.addClass(classBindingModel);
+        return new ResponseEntity<>(classViewModel, HttpStatus.CREATED);
     }
 
     @GetMapping("/{classId}")
-    public ResponseEntity<ClassViewModel> getClassById(@PathVariable Long classId)
-            throws NoSuchElementException {
-        ClassViewModel viewModel = classService.getClassById(classId);
-        return new ResponseEntity<>(viewModel, HttpStatus.OK);
+    public ResponseEntity<ClassViewModel> getClass(@PathVariable Long classId) throws EntityNotFoundException {
+        ClassViewModel classViewModel = classService.getClass(classId);
+        return new ResponseEntity<>(classViewModel, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{classId}/teacher/{teacherId}")
+    public ResponseEntity<ClassViewModel> setTeacherToClass(@PathVariable Long classId, @PathVariable Long teacherId)
+            throws EntityNotFoundException, RoleRequirementViolationException {
+        ClassViewModel classViewModel = classService.setTeacher(teacherId, classId);
+        return new ResponseEntity<>(classViewModel, HttpStatus.OK);
+    }
+
+    @PostMapping("/{classId}/student/{studentId}")
+    public ResponseEntity<ClassViewModel> addStudentToClass(@PathVariable Long classId, @PathVariable Long studentId)
+            throws EntityNotFoundException, RoleRequirementViolationException {
+        ClassViewModel classViewModel = classService.addStudent(classId, studentId);
+        return new ResponseEntity<>(classViewModel, HttpStatus.OK);
     }
 }

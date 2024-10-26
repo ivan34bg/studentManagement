@@ -12,11 +12,11 @@ import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
 import org.studentmanagement.services.UserService;
 
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 @Service
@@ -38,7 +38,6 @@ public class UserServiceImpl implements UserService {
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException {
         UserEntity userEntity = modelMapper.map(userBindingModel, UserEntity.class);
-        userEntity.setRole(RoleEnum.PENDING);
 
         Set<ConstraintViolation<UserEntity>> violations = validator.validate(userEntity);
 
@@ -66,8 +65,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserViewModel getUserByID(Long id) throws NoSuchElementException {
-        UserEntity user = userRepository.findById(id).orElseThrow(NoSuchElementException::new);
+    public UserViewModel getUser(Long id) throws EntityNotFoundException {
+        UserEntity user = getUserEntity(id);
         return modelMapper.map(user, UserViewModel.class);
+    }
+
+    @Override
+    public UserViewModel setUserRole(Long userId, String roleName) throws EntityNotFoundException {
+        try {
+            RoleEnum role = RoleEnum.valueOf(roleName);
+            UserEntity user = getUserEntity(userId);
+
+            user.setRole(role);
+            userRepository.save(user);
+
+            return modelMapper.map(user, UserViewModel.class);
+        } catch (IllegalArgumentException ex) {
+            throw new EntityNotFoundException();
+        }
+    }
+
+    @Override
+    public UserEntity getUserEntity(Long id) throws EntityNotFoundException {
+        return userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 }

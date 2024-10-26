@@ -7,11 +7,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
 import org.studentmanagement.services.UserService;
-
-import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("user")
@@ -31,9 +30,16 @@ public class UserController {
         return new ResponseEntity<>(userViewModel, HttpStatus.CREATED);
     }
 
-    @GetMapping("/{userID}")
-    public ResponseEntity<UserViewModel> getUser(@PathVariable Long userID) throws NoSuchElementException {
-        UserViewModel userViewModel = userService.getUserByID(userID);
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserViewModel> getUser(@PathVariable Long userId) throws EntityNotFoundException {
+        UserViewModel userViewModel = userService.getUser(userId);
+        return new ResponseEntity<>(userViewModel, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{userId}/role")
+    public ResponseEntity<UserViewModel> setUserRole(@PathVariable Long userId, @RequestBody String roleName)
+            throws EntityNotFoundException {
+        UserViewModel userViewModel = userService.setUserRole(userId, roleName);
         return new ResponseEntity<>(userViewModel, HttpStatus.OK);
     }
 }
