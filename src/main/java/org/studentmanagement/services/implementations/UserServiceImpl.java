@@ -6,20 +6,17 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
-import org.studentmanagement.exceptions.UserNotFoundException;
 import org.studentmanagement.services.UserService;
 
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -41,7 +38,6 @@ public class UserServiceImpl implements UserService {
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException {
         UserEntity userEntity = modelMapper.map(userBindingModel, UserEntity.class);
-        userEntity.setRole(RoleEnum.PENDING);
 
         Set<ConstraintViolation<UserEntity>> violations = validator.validate(userEntity);
 
@@ -53,11 +49,11 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserViewModel saveUserEntity(UserEntity userEntity) throws UserEntityUniqueConstraintViolationException {
-        try {
+        if (userRepository.existsByEmail(userEntity.getEmail())) {
+            throw new UserEntityUniqueConstraintViolationException();
+        } else {
             UserEntity savedUser = userRepository.save(userEntity);
             return modelMapper.map(savedUser, UserViewModel.class);
-        } catch (DataIntegrityViolationException e) {
-            throw new UserEntityUniqueConstraintViolationException();
         }
     }
 
@@ -69,13 +65,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserViewModel getUserByID(Long id) throws UserNotFoundException {
-        Optional<UserEntity> user = userRepository.findById(id);
+    public UserViewModel getUser(Long id) throws EntityNotFoundException {
+        UserEntity user = getUserEntity(id);
+        return modelMapper.map(user, UserViewModel.class);
+    }
 
-        if (user.isPresent()) {
-            return modelMapper.map(user.get(), UserViewModel.class);
+    @Override
+    public UserViewModel setUserRole(Long userId, String roleName) throws EntityNotFoundException {
+        try {
+            RoleEnum role = RoleEnum.valueOf(roleName);
+            UserEntity user = getUserEntity(userId);
+
+            user.setRole(role);
+            userRepository.save(user);
+
+            return modelMapper.map(user, UserViewModel.class);
+        } catch (IllegalArgumentException ex) {
+            throw new EntityNotFoundException();
         }
+    }
 
-        throw new UserNotFoundException();
+    @Override
+    public UserEntity getUserEntity(Long id) throws EntityNotFoundException {
+        return userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 }

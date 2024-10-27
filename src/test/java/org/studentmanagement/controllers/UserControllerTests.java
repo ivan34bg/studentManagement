@@ -1,5 +1,6 @@
 package org.studentmanagement.controllers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -15,7 +16,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.studentmanagement.data.entities.UserEntity;
+import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
+import org.studentmanagement.data.viewModels.UserViewModel;
 
 import java.util.Arrays;
 
@@ -33,7 +37,7 @@ public class UserControllerTests {
     @Test
     void addUserSuccessfully() throws Exception {
         MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("username", "testUsername");
+        newUser.add("email", "test@test.com");
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
 
@@ -53,14 +57,12 @@ public class UserControllerTests {
 
     @Test
     void addUserNonUnique() throws Exception {
+        UserEntity user = addTestUser();
+
         MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("username", "testUsername");
+        newUser.add("email", user.getEmail());
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
-
-        mockMvc.perform(post("/user")
-                        .params(newUser))
-                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/user").params(newUser))
                 .andExpectAll(status().isConflict());
@@ -81,7 +83,7 @@ public class UserControllerTests {
         String[] sortedMappedResult = Arrays.stream(mappedResult).sorted().toArray(String[]::new);
 
         String[] expectedResult = Arrays.stream(new String[]{
-                "Username should not be empty",
+                "Email should not be empty",
                 "First name should not be empty",
                 "Last name should not be empty"
         }).sorted().toArray(String[]::new);
@@ -92,7 +94,7 @@ public class UserControllerTests {
     @Test
     void addUserLessThanThreeSymbolsFields() throws Exception {
         MultiValueMap<String, String> user = new LinkedMultiValueMap<>();
-        user.add("username", "1");
+        user.add("email", "");
         user.add("firstName", "1");
         user.add("lastName", "1");
 
@@ -103,7 +105,8 @@ public class UserControllerTests {
 
         String[] mappedResult = objectMapper.readValue(result.getResponse().getContentAsString(), String[].class);
         String[] expectedResult = new String[]{
-                "Username should have at least 3 symbols"
+                "Email is invalid",
+                "Email should not be empty"
         };
 
         Assertions.assertArrayEquals(mappedResult, expectedResult);
@@ -111,23 +114,18 @@ public class UserControllerTests {
 
     @Test
     void getUserSuccessfully() throws Exception {
-        MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("username", "testUsername");
-        newUser.add("firstName", "testFirstName");
-        newUser.add("lastName", "testLastName");
+        UserEntity user = addTestUser();
+        UserViewModel mappedUser = objectMapper.convertValue(user, UserViewModel.class);
 
-        mockMvc.perform(post("/user")
-                .params(newUser));
+        MvcResult getResult = mockMvc
+                .perform(get("/user/1"))
+                .andExpect(status().isOk())
+                .andReturn();
 
-        mockMvc.perform(get("/user/1"))
-                .andExpectAll(
-                        status().isOk(),
-                        content().contentType("application/json"),
-                        jsonPath("$.id").value("1"),
-                        jsonPath("$.firstName").value("testFirstName"),
-                        jsonPath("$.lastName").value("testLastName"),
-                        jsonPath("$.role").value("PENDING")
-                );
+        UserViewModel mappedResult = objectMapper
+                .readValue(getResult.getResponse().getContentAsString(), UserViewModel.class);
+
+        Assertions.assertEquals(mappedResult, mappedUser);
     }
 
     @Test
@@ -137,5 +135,31 @@ public class UserControllerTests {
                 .andReturn();
 
         Assertions.assertTrue(result.getResponse().getContentAsString().isEmpty());
+    }
+
+    @Test
+    void setUserRole() throws Exception {
+        addTestUser();
+
+        MvcResult result = mockMvc.perform(patch("/user/1/role")
+                        .content("ADMIN"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        UserViewModel mappedResult = objectMapper
+                .readValue(result.getResponse().getContentAsString(), UserViewModel.class);
+
+        Assertions.assertEquals(mappedResult.getRole(), RoleEnum.ADMIN);
+    }
+
+    private UserEntity addTestUser() {
+        UserEntity user = new UserEntity();
+        user.setEmail("test@test.com");
+        user.setFirstName("test");
+        user.setLastName("test");
+
+        userRepository.save(user);
+
+        return user;
     }
 }

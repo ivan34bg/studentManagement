@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalExceptionHandling {
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Void> handleUserNotFoundException(UserNotFoundException ex) {
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Void> handleNoSuchElementException(EntityNotFoundException ex) {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
@@ -20,6 +20,11 @@ public class GlobalExceptionHandling {
     @ExceptionHandler(FieldConstraintViolationException.class)
     public ResponseEntity<String[]> handleFieldConstraintViolationException(FieldConstraintViolationException ex) {
         return new ResponseEntity<>(ex.getMessages(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(RoleRequirementViolationException.class)
+    public ResponseEntity<String> handleRoleRequirementViolationException(RoleRequirementViolationException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
