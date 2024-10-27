@@ -37,7 +37,7 @@ public class UserControllerTests {
     @Test
     void addUserSuccessfully() throws Exception {
         MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("username", "testUsername");
+        newUser.add("email", "test@test.com");
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
 
@@ -60,7 +60,7 @@ public class UserControllerTests {
         UserEntity user = addTestUser();
 
         MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("username", user.getUsername());
+        newUser.add("email", user.getEmail());
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
 
@@ -83,7 +83,7 @@ public class UserControllerTests {
         String[] sortedMappedResult = Arrays.stream(mappedResult).sorted().toArray(String[]::new);
 
         String[] expectedResult = Arrays.stream(new String[]{
-                "Username should not be empty",
+                "Email should not be empty",
                 "First name should not be empty",
                 "Last name should not be empty"
         }).sorted().toArray(String[]::new);
@@ -94,7 +94,7 @@ public class UserControllerTests {
     @Test
     void addUserLessThanThreeSymbolsFields() throws Exception {
         MultiValueMap<String, String> user = new LinkedMultiValueMap<>();
-        user.add("username", "1");
+        user.add("email", "");
         user.add("firstName", "1");
         user.add("lastName", "1");
 
@@ -105,7 +105,8 @@ public class UserControllerTests {
 
         String[] mappedResult = objectMapper.readValue(result.getResponse().getContentAsString(), String[].class);
         String[] expectedResult = new String[]{
-                "Username should have at least 3 symbols"
+                "Email is invalid",
+                "Email should not be empty"
         };
 
         Assertions.assertArrayEquals(mappedResult, expectedResult);
@@ -153,7 +154,7 @@ public class UserControllerTests {
 
     private UserEntity addTestUser() {
         UserEntity user = new UserEntity();
-        user.setUsername("test");
+        user.setEmail("test@test.com");
         user.setFirstName("test");
         user.setLastName("test");
 

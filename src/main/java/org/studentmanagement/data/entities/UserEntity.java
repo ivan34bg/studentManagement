@@ -2,6 +2,8 @@ package org.studentmanagement.data.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,10 +20,11 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 public class UserEntity extends BaseEntity {
-    @NotBlank(message = "Username should not be empty")
-    @Length(min = 3, message = "Username should have at least 3 symbols")
+    @NotBlank(message = "Email should not be empty")
+    @Pattern(regexp = "(^[a-zA-Z]+\\w{2,})@([a-z]{3,}).([a-z]{3,})",
+            message = "Email is invalid")
     @Column(unique = true)
-    private String username;
+    private String email;
     @NotBlank(message = "First name should not be empty")
     private String firstName;
     @NotBlank(message = "Last name should not be empty")

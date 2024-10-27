@@ -19,8 +19,6 @@ import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.ClassViewModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
 
-import java.util.Arrays;
-
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -206,7 +204,7 @@ public class ClassControllerTests {
 
     private UserEntity addTestUser(RoleEnum role) {
         UserEntity user = new UserEntity();
-        user.setUsername("test");
+        user.setEmail("test@test.com");
         user.setFirstName("test");
         user.setLastName("test");
         user.setRole(role);

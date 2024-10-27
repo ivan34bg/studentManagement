@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserViewModel saveUserEntity(UserEntity userEntity) throws UserEntityUniqueConstraintViolationException {
-        if (userRepository.existsByUsername(userEntity.getUsername())) {
+        if (userRepository.existsByEmail(userEntity.getEmail())) {
             throw new UserEntityUniqueConstraintViolationException();
         } else {
             UserEntity savedUser = userRepository.save(userEntity);
