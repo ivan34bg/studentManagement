@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 @ControllerAdvice
 public class GlobalExceptionHandling {
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Void> handleNoSuchElementException(EntityNotFoundException ex) {
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<String> handleNoSuchElementException(EntityNotFoundException ex) {
+        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(UserEntityUniqueConstraintViolationException.class)

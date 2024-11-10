@@ -26,7 +26,7 @@ public class UserController {
     public ResponseEntity<UserViewModel> registerUser(@ModelAttribute RegisterUserBindingModel userBindingModel)
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException {
-        UserViewModel userViewModel = userService.registerUser(userBindingModel);
+        UserViewModel userViewModel = userService.register(userBindingModel);
         return new ResponseEntity<>(userViewModel, HttpStatus.CREATED);
     }
 

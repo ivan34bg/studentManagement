@@ -4,9 +4,17 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import org.apache.catalina.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.studentmanagement.data.bindingModels.LoginBindingModel;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
@@ -15,6 +23,7 @@ import org.studentmanagement.data.viewModels.UserViewModel;
 import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
+import org.studentmanagement.services.JwtTokenService;
 import org.studentmanagement.services.UserService;
 
 import java.util.Set;
@@ -24,17 +33,27 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
     private final Validator validator;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtTokenService jwtTokenService;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ModelMapper modelMapper) {
+    public UserServiceImpl(UserRepository userRepository,
+                           ModelMapper modelMapper,
+                           AuthenticationManager authenticationManager,
+                           PasswordEncoder passwordEncoder,
+                           JwtTokenService jwtTokenService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
+        this.authenticationManager = authenticationManager;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenService = jwtTokenService;
         ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
         this.validator = validatorFactory.getValidator();
     }
 
     @Override
-    public UserViewModel registerUser(RegisterUserBindingModel userBindingModel)
+    public UserViewModel register(RegisterUserBindingModel userBindingModel)
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException {
         UserEntity userEntity = modelMapper.map(userBindingModel, UserEntity.class);
@@ -52,6 +71,8 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(userEntity.getEmail())) {
             throw new UserEntityUniqueConstraintViolationException();
         } else {
+            String encodedPassword = passwordEncoder.encode(userEntity.getPassword());
+            userEntity.setPassword(encodedPassword);
             UserEntity savedUser = userRepository.save(userEntity);
             return modelMapper.map(savedUser, UserViewModel.class);
         }
@@ -62,6 +83,23 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(ConstraintViolation::getMessage)
                 .toArray(String[]::new);
+    }
+
+    @Override
+    public String login(LoginBindingModel loginBindingModel) throws EntityNotFoundException {
+        UserEntity user = getUserEntity(loginBindingModel.getEmail());
+        String token = jwtTokenService.generateToken(user);
+        Authentication authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken
+                .unauthenticated(loginBindingModel.getEmail(), loginBindingModel.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        return token;
+    }
+
+    @Override
+    public void logout(String token) {
+        jwtTokenService.invalidateToken(token);
     }
 
     @Override
@@ -88,5 +126,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserEntity getUserEntity(Long id) throws EntityNotFoundException {
         return userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+    }
+
+    private UserEntity getUserEntity(String email) throws EntityNotFoundException {
+        return userRepository.findUserEntityByEmail(email).orElseThrow(EntityNotFoundException::new);
     }
 }

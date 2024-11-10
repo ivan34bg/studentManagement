@@ -36,7 +36,7 @@ public class ClassController {
     @PatchMapping("/{classId}/teacher/{teacherId}")
     public ResponseEntity<ClassViewModel> setTeacherToClass(@PathVariable Long classId, @PathVariable Long teacherId)
             throws EntityNotFoundException, RoleRequirementViolationException {
-        ClassViewModel classViewModel = classService.setTeacher(teacherId, classId);
+        ClassViewModel classViewModel = classService.setTeacher(classId, teacherId);
         return new ResponseEntity<>(classViewModel, HttpStatus.OK);
     }
 
