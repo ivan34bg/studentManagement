@@ -2,12 +2,11 @@ package org.studentmanagement.data.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.lang.NonNull;
 import org.studentmanagement.data.enums.RoleEnum;
 
@@ -25,6 +24,9 @@ public class UserEntity extends BaseEntity {
             message = "Email is invalid")
     @Column(unique = true)
     private String email;
+    @NotBlank(message = "Password should not be empty")
+    @Size(min = 8, message = "Password cannot be less than 8 symbols")
+    private String password;
     @NotBlank(message = "First name should not be empty")
     private String firstName;
     @NotBlank(message = "Last name should not be empty")

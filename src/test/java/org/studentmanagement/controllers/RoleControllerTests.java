@@ -9,13 +9,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.studentmanagement.data.enums.RoleEnum;
+import org.studentmanagement.testUtilities.BaseTest;
+
+import java.util.prefs.BackingStoreException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 @SpringBootTest
-public class RoleControllerTests {
+public class RoleControllerTests extends BaseTest {
     @Autowired
     MockMvc mockMvc;
 
@@ -24,8 +27,11 @@ public class RoleControllerTests {
 
     @Test
     void getRoles() throws Exception {
+        authorize(RoleEnum.ADMIN);
+
         MvcResult result = mockMvc
-                .perform(get("/roles"))
+                .perform(get("/roles")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 

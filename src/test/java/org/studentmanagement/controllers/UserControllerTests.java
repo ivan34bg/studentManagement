@@ -20,13 +20,14 @@ import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.testUtilities.BaseTest;
 
 import java.util.Arrays;
 
 @AutoConfigureMockMvc
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class UserControllerTests {
+public class UserControllerTests extends BaseTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -40,6 +41,7 @@ public class UserControllerTests {
         newUser.add("email", "test@test.com");
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
+        newUser.add("password", "testtest");
 
         mockMvc.perform(post("/user")
                         .params(newUser))
@@ -63,6 +65,7 @@ public class UserControllerTests {
         newUser.add("email", user.getEmail());
         newUser.add("firstName", "testFirstName");
         newUser.add("lastName", "testLastName");
+        newUser.add("password", "testtest");
 
         mockMvc.perform(post("/user").params(newUser))
                 .andExpectAll(status().isConflict());
@@ -85,7 +88,8 @@ public class UserControllerTests {
         String[] expectedResult = Arrays.stream(new String[]{
                 "Email should not be empty",
                 "First name should not be empty",
-                "Last name should not be empty"
+                "Last name should not be empty",
+                "Password should not be empty"
         }).sorted().toArray(String[]::new);
 
         Assertions.assertArrayEquals(sortedMappedResult, expectedResult);
@@ -97,6 +101,7 @@ public class UserControllerTests {
         user.add("email", "");
         user.add("firstName", "1");
         user.add("lastName", "1");
+        user.add("password", "1");
 
         MvcResult result = mockMvc.perform(post("/user")
                         .params(user))
@@ -104,12 +109,15 @@ public class UserControllerTests {
                 .andReturn();
 
         String[] mappedResult = objectMapper.readValue(result.getResponse().getContentAsString(), String[].class);
-        String[] expectedResult = new String[]{
-                "Email is invalid",
-                "Email should not be empty"
-        };
+        String[] sortedMappedResult = Arrays.stream(mappedResult).sorted().toArray(String[]::new);
 
-        Assertions.assertArrayEquals(mappedResult, expectedResult);
+        String[] expectedResult = Arrays.stream(new String[]{
+                "Email is invalid",
+                "Email should not be empty",
+                "Password cannot be less than 8 symbols"
+        }).sorted().toArray(String[]::new);
+
+        Assertions.assertArrayEquals(sortedMappedResult, expectedResult);
     }
 
     @Test
@@ -117,8 +125,11 @@ public class UserControllerTests {
         UserEntity user = addTestUser();
         UserViewModel mappedUser = objectMapper.convertValue(user, UserViewModel.class);
 
+        authorize(RoleEnum.ADMIN);
+
         MvcResult getResult = mockMvc
-                .perform(get("/user/1"))
+                .perform(get("/user/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -130,7 +141,9 @@ public class UserControllerTests {
 
     @Test
     void getUserNonExistent() throws Exception {
-        MvcResult result = mockMvc.perform(get("/user/1"))
+        authorize(RoleEnum.ADMIN);
+        MvcResult result = mockMvc.perform(get("/user/100")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
@@ -141,8 +154,11 @@ public class UserControllerTests {
     void setUserRole() throws Exception {
         addTestUser();
 
+        authorize(RoleEnum.ADMIN);
+
         MvcResult result = mockMvc.perform(patch("/user/1/role")
-                        .content("ADMIN"))
+                        .content("ADMIN")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -157,6 +173,7 @@ public class UserControllerTests {
         user.setEmail("test@test.com");
         user.setFirstName("test");
         user.setLastName("test");
+        user.setPassword("testtest");
 
         userRepository.save(user);
 

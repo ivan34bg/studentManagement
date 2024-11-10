@@ -2,6 +2,7 @@ package org.studentmanagement.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -18,6 +19,10 @@ import org.studentmanagement.data.repositories.ClassRepository;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.ClassViewModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
+import org.studentmanagement.testUtilities.BaseTest;
+
+import java.util.LinkedList;
+import java.util.Random;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -25,15 +30,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class ClassControllerTests {
-    @Autowired
-    MockMvc mockMvc;
+public class ClassControllerTests extends BaseTest {
     @Autowired
     ClassRepository classRepository;
     @Autowired
     UserRepository userRepository;
     @Autowired
     ObjectMapper objectMapper;
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        authorize(RoleEnum.TEACHER);
+    }
 
     @Test
     void addClassSuccessful() throws Exception {
@@ -43,7 +51,8 @@ public class ClassControllerTests {
 
         mockMvc
                 .perform(post("/class")
-                        .params(newClass))
+                        .params(newClass)
+                        .header("Authorization", "Bearer " + token))
                 .andExpectAll(
                         status().isCreated(),
                         jsonPath("$.id").value("1"),
@@ -61,7 +70,8 @@ public class ClassControllerTests {
 
         MvcResult result = mockMvc
                 .perform(post("/class")
-                        .params(newClass))
+                        .params(newClass)
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -78,11 +88,13 @@ public class ClassControllerTests {
 
         MvcResult postResult = mockMvc
                 .perform(post("/class")
-                        .params(newClass))
+                        .params(newClass)
+                        .header("Authorization", "Bearer " + token))
                 .andReturn();
 
         MvcResult getResult = mockMvc
-                .perform(get("/class/1"))
+                .perform(get("/class/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -92,11 +104,12 @@ public class ClassControllerTests {
     @Test
     void getClassNonExistent() throws Exception {
         MvcResult result = mockMvc
-                .perform(get("/class/123"))
+                .perform(get("/class/123")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
-        Assertions.assertTrue(result.getResponse().getContentAsString().isEmpty());
+        Assertions.assertEquals(result.getResponse().getContentAsString(), "Class not found");
     }
 
     @Test
@@ -104,7 +117,8 @@ public class ClassControllerTests {
         addTestClass();
         UserEntity user = addTestUser(RoleEnum.TEACHER);
 
-        MvcResult result = mockMvc.perform(patch("/class/1/teacher/1"))
+        MvcResult result = mockMvc.perform(patch("/class/1/teacher/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -114,7 +128,6 @@ public class ClassControllerTests {
         UserViewModel mappedUser = objectMapper
                 .convertValue(user, UserViewModel.class);
 
-
         assert (mappedResult.getTeacher()).equals(mappedUser);
     }
 
@@ -122,18 +135,20 @@ public class ClassControllerTests {
     void setClassTeacherNonExistentClass() throws Exception {
         addTestUser(RoleEnum.TEACHER);
 
-        MvcResult result = mockMvc.perform(patch("/class/100/teacher/1"))
+        MvcResult result = mockMvc.perform(patch("/class/100/teacher/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
-        Assertions.assertTrue(result.getResponse().getContentAsString().isEmpty());
+        Assertions.assertEquals(result.getResponse().getContentAsString(), "Class not found");
     }
 
     @Test
     void setClassTeacherNonExistentTeacher() throws Exception {
         addTestClass();
 
-        MvcResult result = mockMvc.perform(patch("/class/1/teacher/100"))
+        MvcResult result = mockMvc.perform(patch("/class/1/teacher/100")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
@@ -143,9 +158,10 @@ public class ClassControllerTests {
     @Test
     void setClassTeacherUserNotTeacherRole() throws Exception {
         addTestClass();
-        addTestUser(RoleEnum.STUDENT);
+        UserEntity user = addTestUser(RoleEnum.STUDENT);
 
-        MvcResult result = mockMvc.perform(patch("/class/1/teacher/1"))
+        MvcResult result = mockMvc.perform(patch("/class/1/teacher/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -157,7 +173,8 @@ public class ClassControllerTests {
         addTestClass();
         UserEntity student = addTestUser(RoleEnum.STUDENT);
 
-        MvcResult result = mockMvc.perform(post("/class/1/student/1"))
+        MvcResult result = mockMvc.perform(post("/class/1/student/" + student.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -172,7 +189,8 @@ public class ClassControllerTests {
     void addStudentToClassNonExistentClass() throws Exception {
         addTestUser(RoleEnum.STUDENT);
 
-        MvcResult result = mockMvc.perform(post("/class/100/student/1"))
+        MvcResult result = mockMvc.perform(post("/class/100/student/100")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
@@ -183,7 +201,8 @@ public class ClassControllerTests {
     void addStudentToClassNonExistentUser() throws Exception {
         addTestClass();
 
-        MvcResult result = mockMvc.perform(post("/class/1/student/100"))
+        MvcResult result = mockMvc.perform(post("/class/1/student/100")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andReturn();
 
@@ -195,7 +214,8 @@ public class ClassControllerTests {
         addTestClass();
         addTestUser(RoleEnum.TEACHER);
 
-        MvcResult result = mockMvc.perform(post("/class/1/student/1"))
+        MvcResult result = mockMvc.perform(post("/class/1/student/1")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -207,6 +227,7 @@ public class ClassControllerTests {
         user.setEmail("test@test.com");
         user.setFirstName("test");
         user.setLastName("test");
+        user.setPassword("testtest");
         user.setRole(role);
 
         userRepository.save(user);
@@ -215,8 +236,15 @@ public class ClassControllerTests {
     }
 
     private ClassEntity addTestClass() {
-        ClassEntity clazz = new ClassEntity();
-        clazz.setTitle("testTitle");
+        Random random = new Random();
+        int randomNumber = random.nextInt(100);
+
+        ClassEntity clazz = new ClassEntity(
+                "test" + Integer.toString(randomNumber),
+                "",
+                null,
+                new LinkedList<>()
+        );
 
         classRepository.save(clazz);
 

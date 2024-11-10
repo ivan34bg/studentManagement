@@ -97,6 +97,6 @@ public class ClassServiceImpl implements ClassService {
     }
 
     private ClassEntity getClassEntity(Long id) throws EntityNotFoundException {
-        return classRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        return classRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Class not found"));
     }
 }
