@@ -21,7 +21,7 @@ public class ClassController {
     }
 
     @PostMapping()
-    public ResponseEntity<ClassViewModel> addClass(@ModelAttribute AddClassBindingModel classBindingModel)
+    public ResponseEntity<ClassViewModel> addClass(@RequestBody AddClassBindingModel classBindingModel)
             throws FieldConstraintViolationException {
         ClassViewModel classViewModel = classService.addClass(classBindingModel);
         return new ResponseEntity<>(classViewModel, HttpStatus.CREATED);

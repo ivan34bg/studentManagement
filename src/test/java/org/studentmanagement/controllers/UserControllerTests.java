@@ -6,16 +6,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
@@ -34,40 +35,50 @@ public class UserControllerTests extends BaseTest {
     private UserRepository userRepository;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private Gson gson;
 
     @Test
     void addUserSuccessfully() throws Exception {
-        MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("email", "test@test.com");
-        newUser.add("firstName", "testFirstName");
-        newUser.add("lastName", "testLastName");
-        newUser.add("password", "testtest");
+        RegisterUserBindingModel model = new RegisterUserBindingModel(
+                "test@test.com",
+                "testtest",
+                "testFirstName",
+                "testLastName"
+        );
+
+        String jsonModel = gson.toJson(model);
 
         mockMvc.perform(post("/user")
-                        .params(newUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel))
                 .andExpectAll(
                         status().isCreated(),
                         content().contentType("application/json"),
-                        jsonPath("$.id").value("1"),
                         jsonPath("$.firstName").value("testFirstName"),
-                        jsonPath("$.lastName").value("testLastName"),
-                        jsonPath("$.role").value("PENDING")
+                        jsonPath("$.lastName").value("testLastName")
                 );
 
         Assertions.assertEquals(userRepository.count(), 1);
+        Assertions.assertEquals(userRepository.findById(1L).orElseThrow().getRole(), RoleEnum.PENDING);
     }
 
     @Test
     void addUserNonUnique() throws Exception {
         UserEntity user = addTestUser();
 
-        MultiValueMap<String, String> newUser = new LinkedMultiValueMap<>();
-        newUser.add("email", user.getEmail());
-        newUser.add("firstName", "testFirstName");
-        newUser.add("lastName", "testLastName");
-        newUser.add("password", "testtest");
+        RegisterUserBindingModel model = new RegisterUserBindingModel(
+                user.getEmail(),
+                "testFirstName",
+                "testLastName",
+                "testtest"
+        );
 
-        mockMvc.perform(post("/user").params(newUser))
+        String jsonModel = gson.toJson(model);
+
+        mockMvc.perform(post("/user")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel))
                 .andExpectAll(status().isConflict());
 
         Assertions.assertEquals(userRepository.count(), 1);
@@ -75,10 +86,11 @@ public class UserControllerTests extends BaseTest {
 
     @Test
     void addUserEmptyFields() throws Exception {
-        MultiValueMap<String, String> user = new LinkedMultiValueMap<>();
+        String jsonModel = gson.toJson(new RegisterUserBindingModel());
 
         MvcResult result = mockMvc.perform(post("/user")
-                        .params(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -97,14 +109,12 @@ public class UserControllerTests extends BaseTest {
 
     @Test
     void addUserLessThanThreeSymbolsFields() throws Exception {
-        MultiValueMap<String, String> user = new LinkedMultiValueMap<>();
-        user.add("email", "");
-        user.add("firstName", "1");
-        user.add("lastName", "1");
-        user.add("password", "1");
+        RegisterUserBindingModel model = new RegisterUserBindingModel("", "1", "1", "1");
+        String jsonModel = gson.toJson(model);
 
         MvcResult result = mockMvc.perform(post("/user")
-                        .params(user))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel))
                 .andExpect(status().isBadRequest())
                 .andReturn();
 
@@ -165,7 +175,7 @@ public class UserControllerTests extends BaseTest {
         UserViewModel mappedResult = objectMapper
                 .readValue(result.getResponse().getContentAsString(), UserViewModel.class);
 
-        Assertions.assertEquals(mappedResult.getRole(), RoleEnum.ADMIN);
+        Assertions.assertEquals(userRepository.findById(1L).orElseThrow().getRole(), RoleEnum.ADMIN);
     }
 
     private UserEntity addTestUser() {

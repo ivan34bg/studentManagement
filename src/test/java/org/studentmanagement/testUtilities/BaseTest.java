@@ -1,15 +1,22 @@
 package org.studentmanagement.testUtilities;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.gson.Gson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.studentmanagement.data.bindingModels.LoginBindingModel;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
+import org.studentmanagement.data.viewModels.LoginUserViewModel;
 
 import java.util.LinkedList;
 
@@ -25,11 +32,10 @@ public class BaseTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public String token;
-    private final MultiValueMap<String, String> userDetails = new LinkedMultiValueMap<>(){{
-        add("email", "loggedInUser@test.com");
-        add("password", "test1234");
-    }};
 
     public void authorize(RoleEnum role) throws Exception {
         userRepository.save(new UserEntity(
@@ -41,10 +47,21 @@ public class BaseTest {
                 new LinkedList<>()
         ));
 
-        token = mockMvc.perform(post("/login")
-                        .params(userDetails))
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+        LoginBindingModel model = new LoginBindingModel("loggedInUser@test.com", "test1234");
+
+        Gson gson = new Gson();
+        String jsonUserDetails = gson.toJson(model);
+
+        MvcResult response = mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonUserDetails))
+                .andReturn();
+
+        LoginUserViewModel viewModel = objectMapper.readValue(
+                response.getResponse().getContentAsString(),
+                LoginUserViewModel.class
+        );
+
+        token = viewModel.getToken();
     }
 }

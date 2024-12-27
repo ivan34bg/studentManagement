@@ -23,7 +23,7 @@ public class UserController {
     }
 
     @PostMapping()
-    public ResponseEntity<UserViewModel> registerUser(@ModelAttribute RegisterUserBindingModel userBindingModel)
+    public ResponseEntity<UserViewModel> registerUser(@RequestBody RegisterUserBindingModel userBindingModel)
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException {
         UserViewModel userViewModel = userService.register(userBindingModel);
