@@ -11,6 +11,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.studentmanagement.security.AuthenticationFilter;
 import org.studentmanagement.security.JwtAuthenticationEntryPoint;
 import org.studentmanagement.security.JwtLogoutHandler;
@@ -48,6 +51,14 @@ public class SecurityFilterConfig {
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint));
 
         http.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.cors(cors -> cors.configurationSource(request -> {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.addAllowedOrigin("*");
+            configuration.addAllowedHeader("*");
+            configuration.addAllowedMethod("*");
+
+            return configuration;
+        }));
         return http.build();
     }
 }
