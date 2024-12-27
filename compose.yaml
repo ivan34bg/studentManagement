@@ -15,9 +15,11 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_JPA_PROPERTIES_HIBERNATE_SHOW_SQL=true
       - SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL=true
-
     ports:
       - 8080:8080
+    env_file: 
+      - app.env
+       
   db:
     image: 'postgres:latest'
     container_name: db
