@@ -55,13 +55,12 @@ public class UserControllerTests extends BaseTest {
                 .andExpectAll(
                         status().isCreated(),
                         content().contentType("application/json"),
-                        jsonPath("$.id").value("1"),
                         jsonPath("$.firstName").value("testFirstName"),
-                        jsonPath("$.lastName").value("testLastName"),
-                        jsonPath("$.role").value("PENDING")
+                        jsonPath("$.lastName").value("testLastName")
                 );
 
         Assertions.assertEquals(userRepository.count(), 1);
+        Assertions.assertEquals(userRepository.findById(1L).orElseThrow().getRole(), RoleEnum.PENDING);
     }
 
     @Test
@@ -176,7 +175,7 @@ public class UserControllerTests extends BaseTest {
         UserViewModel mappedResult = objectMapper
                 .readValue(result.getResponse().getContentAsString(), UserViewModel.class);
 
-        Assertions.assertEquals(mappedResult.getRole(), RoleEnum.ADMIN);
+        Assertions.assertEquals(userRepository.findById(1L).orElseThrow().getRole(), RoleEnum.ADMIN);
     }
 
     private UserEntity addTestUser() {

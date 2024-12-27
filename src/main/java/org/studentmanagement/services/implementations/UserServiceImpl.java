@@ -16,9 +16,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.bindingModels.LoginBindingModel;
 import org.studentmanagement.data.bindingModels.RegisterUserBindingModel;
+import org.studentmanagement.data.entities.TokenEntity;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
+import org.studentmanagement.data.viewModels.LoginUserViewModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
 import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
@@ -86,15 +88,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String login(LoginBindingModel loginBindingModel) throws EntityNotFoundException {
+    public LoginUserViewModel login(LoginBindingModel loginBindingModel) throws EntityNotFoundException {
         UserEntity user = getUserEntity(loginBindingModel.getEmail());
-        String token = jwtTokenService.generateToken(user);
+        TokenEntity token = jwtTokenService.generateToken(user);
         Authentication authentication = authenticationManager.authenticate(UsernamePasswordAuthenticationToken
                 .unauthenticated(loginBindingModel.getEmail(), loginBindingModel.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        return token;
+        LoginUserViewModel model = modelMapper.map(user, LoginUserViewModel.class);
+        model.setToken(token.getToken());
+        model.setExpirationDate(token.getExpirationDate());
+
+        return model;
     }
 
     @Override

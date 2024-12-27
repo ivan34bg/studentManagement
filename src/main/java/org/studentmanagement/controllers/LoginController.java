@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.studentmanagement.data.bindingModels.LoginBindingModel;
+import org.studentmanagement.data.viewModels.LoginUserViewModel;
 import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.services.UserService;
 
@@ -20,9 +21,9 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginBindingModel loginBindingModel)
+    public ResponseEntity<LoginUserViewModel> login(@RequestBody LoginBindingModel loginBindingModel)
             throws EntityNotFoundException {
-        String token = userService.login(loginBindingModel);
-        return new ResponseEntity<>(token, HttpStatus.OK);
+        LoginUserViewModel model = userService.login(loginBindingModel);
+        return new ResponseEntity<>(model, HttpStatus.OK);
     }
 }

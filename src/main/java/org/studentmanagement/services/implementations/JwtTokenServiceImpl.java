@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.datetime.DateFormatter;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.entities.TokenEntity;
 import org.studentmanagement.data.entities.UserEntity;
@@ -30,7 +31,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     @Override
-    public String generateToken(UserEntity user) {
+    public TokenEntity generateToken(UserEntity user) {
         deleteExistingToken(user);
 
         Instant currentTime = Instant.now();
@@ -52,7 +53,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
 
         tokenRepository.save(tokenEntity);
 
-        return token;
+        return tokenEntity;
     }
 
     private void deleteExistingToken(UserEntity user) {
