@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.studentmanagement.data.bindingModels.LoginBindingModel;
 import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.services.UserService;
@@ -20,7 +20,7 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@ModelAttribute LoginBindingModel loginBindingModel)
+    public ResponseEntity<String> login(@RequestBody LoginBindingModel loginBindingModel)
             throws EntityNotFoundException {
         String token = userService.login(loginBindingModel);
         return new ResponseEntity<>(token, HttpStatus.OK);

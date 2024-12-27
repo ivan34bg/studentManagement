@@ -1,17 +1,20 @@
 package org.studentmanagement.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.studentmanagement.data.bindingModels.AddClassBindingModel;
 import org.studentmanagement.data.entities.ClassEntity;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
@@ -37,6 +40,8 @@ public class ClassControllerTests extends BaseTest {
     UserRepository userRepository;
     @Autowired
     ObjectMapper objectMapper;
+    @Autowired
+    Gson gson;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -45,13 +50,13 @@ public class ClassControllerTests extends BaseTest {
 
     @Test
     void addClassSuccessful() throws Exception {
-        MultiValueMap<String, String> newClass = new LinkedMultiValueMap<>();
-        newClass.add("title", "testTitle");
-        newClass.add("description", "testDescription");
+        AddClassBindingModel model = new AddClassBindingModel("testTitle", "testDescription");
+        String jsonModel = gson.toJson(model);
 
         mockMvc
                 .perform(post("/class")
-                        .params(newClass)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel)
                         .header("Authorization", "Bearer " + token))
                 .andExpectAll(
                         status().isCreated(),
@@ -65,12 +70,15 @@ public class ClassControllerTests extends BaseTest {
 
     @Test
     void addClassNoTitle() throws Exception {
-        MultiValueMap<String, String> newClass = new LinkedMultiValueMap<>();
-        newClass.add("description", "testDescription");
+        AddClassBindingModel model = new AddClassBindingModel();
+        model.setDescription("testDescription");
+
+        String jsonModel = gson.toJson(model);
 
         MvcResult result = mockMvc
                 .perform(post("/class")
-                        .params(newClass)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonModel)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isBadRequest())
                 .andReturn();
@@ -82,13 +90,16 @@ public class ClassControllerTests extends BaseTest {
 
     @Test
     void getClassSuccessful() throws Exception {
-        MultiValueMap<String, String> newClass = new LinkedMultiValueMap<>();
-        newClass.add("title", "testTitle");
-        newClass.add("description", "testDescription");
+        ClassEntity classEntity = new ClassEntity();
+        classEntity.setTitle("testTitle");
+        classEntity.setDescription("testDescription");
+
+        String jsonEntity = gson.toJson(classEntity);
 
         MvcResult postResult = mockMvc
                 .perform(post("/class")
-                        .params(newClass)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonEntity)
                         .header("Authorization", "Bearer " + token))
                 .andReturn();
 
