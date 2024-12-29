@@ -70,6 +70,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                  ExpiredJwtException |
                  IllegalArgumentException |
                  SignatureException ex) {
+            invalidateToken(token);
             return false;
         }
 
@@ -96,8 +97,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
 
     @Override
     public void invalidateToken(String token) {
-        String email = getSubject(token);
-        tokenRepository.findTokenEntityByTokenAndUserEmail(token, email).ifPresent(tokenRepository::delete);
+        tokenRepository.findTokenEntityByToken(token).ifPresent(tokenRepository::delete);
     }
 
     private String getSubject(String token) {

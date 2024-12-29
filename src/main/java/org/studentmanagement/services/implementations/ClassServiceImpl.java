@@ -19,6 +19,9 @@ import org.studentmanagement.exceptions.RoleRequirementViolationException;
 import org.studentmanagement.services.ClassService;
 import org.studentmanagement.services.UserService;
 
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -26,6 +29,7 @@ public class ClassServiceImpl implements ClassService {
     private final ClassRepository classRepository;
     private final ModelMapper modelMapper;
     private final Validator validator;
+
 
     private final UserService userService;
 
@@ -49,6 +53,20 @@ public class ClassServiceImpl implements ClassService {
         } else {
             throw new FieldConstraintViolationException(getViolationMessages(violations));
         }
+    }
+
+    @Override
+    public List<ClassViewModel> getUserClasses(Principal principal) throws EntityNotFoundException {
+        UserEntity user = userService.getUserEntity(principal.getName());
+        List<ClassEntity> classes;
+
+        switch (user.getRole()) {
+            case TEACHER -> classes = classRepository.findAllByTeacher(user);
+            case STUDENT -> classes = classRepository.findAllByStudentsContains(user);
+            default -> classes = new ArrayList<>();
+        }
+
+        return classes.stream().map( classEntity -> modelMapper.map(classEntity, ClassViewModel.class)).toList();
     }
 
     private String[] getViolationMessages(Set<ConstraintViolation<ClassEntity>> violations) {
