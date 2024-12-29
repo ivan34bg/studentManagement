@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface TokenRepository extends CrudRepository<TokenEntity, Long> {
     Optional<TokenEntity> findTokenEntityByTokenAndUserEmail(String token, String userEmail);
     Optional<TokenEntity> findTokenEntityByUser(UserEntity user);
+    Optional<TokenEntity> findTokenEntityByToken(String token);
 }
