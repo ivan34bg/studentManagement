@@ -36,16 +36,18 @@ public class BaseTest {
     private ObjectMapper objectMapper;
 
     public String token;
+    public UserEntity user;
 
     public void authorize(RoleEnum role) throws Exception {
-        userRepository.save(new UserEntity(
+        user = new UserEntity(
                 "loggedInUser@test.com",
                 "$2a$10$gL473jsyStv7IUj1wl7PI.BmLutLl3rPBItcKv0pmkTZle4zJTCW2",
                 "test",
                 "test",
                 role,
                 new LinkedList<>()
-        ));
+        );
+        userRepository.save(user);
 
         LoginBindingModel model = new LoginBindingModel("loggedInUser@test.com", "test1234");
 

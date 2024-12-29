@@ -20,4 +20,5 @@ public interface UserService {
     UserViewModel getUser(Long id) throws EntityNotFoundException;
     UserViewModel setUserRole(Long userId, String roleName) throws EntityNotFoundException;
     UserEntity getUserEntity(Long id) throws EntityNotFoundException;
+    UserEntity getUserEntity(String email) throws EntityNotFoundException;
 }

@@ -11,6 +11,9 @@ import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.RoleRequirementViolationException;
 import org.studentmanagement.services.ClassService;
 
+import java.security.Principal;
+import java.util.List;
+
 @Controller
 @RequestMapping("/class")
 public class ClassController {
@@ -25,6 +28,12 @@ public class ClassController {
             throws FieldConstraintViolationException {
         ClassViewModel classViewModel = classService.addClass(classBindingModel);
         return new ResponseEntity<>(classViewModel, HttpStatus.CREATED);
+    }
+
+    @GetMapping()
+    public ResponseEntity<List<ClassViewModel>> getUserClasses(Principal principal) throws EntityNotFoundException {
+        List<ClassViewModel> userClasses = classService.getUserClasses(principal);
+        return new ResponseEntity<>(userClasses, HttpStatus.OK);
     }
 
     @GetMapping("/{classId}")

@@ -4,14 +4,12 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
-import org.apache.catalina.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.bindingModels.LoginBindingModel;
@@ -134,7 +132,7 @@ public class UserServiceImpl implements UserService {
         return userRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 
-    private UserEntity getUserEntity(String email) throws EntityNotFoundException {
+    public UserEntity getUserEntity(String email) throws EntityNotFoundException {
         return userRepository.findUserEntityByEmail(email).orElseThrow(EntityNotFoundException::new);
     }
 }
