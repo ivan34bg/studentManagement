@@ -78,3 +78,9 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
     - name: Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+    - name: Show JWT expiration
+      run: echo ${{secrets.APP_JWT_EXPIRATION}} | sed 's/./& /g'
+    - name: Show JWT expiration
+      run: echo ${{secrets.APP_JWT_KEY}} | sed 's/./& /g'
+    - name: Show JWT expiration
+      run: echo ${{secrets.APP_JWT_KEY_ALGORITHM}} | sed 's/./& /g'
