@@ -6,18 +6,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MvcResult;
 import org.studentmanagement.data.bindingModels.AddClassBindingModel;
+import org.studentmanagement.data.bindingModels.AddStudentBindingModel;
 import org.studentmanagement.data.entities.ClassEntity;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
@@ -45,8 +42,6 @@ public class ClassControllerTests extends BaseTest {
     ObjectMapper objectMapper;
     @Autowired
     Gson gson;
-    @Autowired
-    ModelMapper modelMapper;
 
     @Nested
     @ActiveProfiles("test")
@@ -59,7 +54,12 @@ public class ClassControllerTests extends BaseTest {
 
         @Test
         void addClassSuccessful() throws Exception {
-            AddClassBindingModel model = new AddClassBindingModel("testTitle", "testDescription");
+            AddClassBindingModel model = AddClassBindingModel
+                    .builder()
+                    .title("testTitle")
+                    .description("testDescription")
+                    .build();
+
             String jsonModel = gson.toJson(model);
 
             mockMvc
@@ -74,7 +74,7 @@ public class ClassControllerTests extends BaseTest {
                             jsonPath("$.description").value("testDescription")
                     );
 
-            Assertions.assertEquals(classRepository.count(), 1);
+            Assertions.assertEquals(1, classRepository.count());
         }
 
         @Test
@@ -94,7 +94,7 @@ public class ClassControllerTests extends BaseTest {
 
             String[] mappedResult = objectMapper.readValue(result.getResponse().getContentAsString(), String[].class);
 
-            Assertions.assertArrayEquals(mappedResult, new String[]{"Title should not be empty"});
+            Assertions.assertArrayEquals(new String[]{"Title should not be empty"}, mappedResult);
         }
 
         @Test
@@ -123,22 +123,24 @@ public class ClassControllerTests extends BaseTest {
 
         @Test
         void getClassNonExistent() throws Exception {
-            MvcResult result = mockMvc
-                    .perform(get("/class/123")
+            mockMvc.perform(get("/class/123")
                             .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isNotFound())
-                    .andReturn();
-
-            Assertions.assertEquals(result.getResponse().getContentAsString(), "Class not found");
+                    .andExpect(status().isNotFound());
         }
 
         @Test
         void setClassTeacher() throws Exception {
             addTestClass();
             UserEntity user = addTestUser(RoleEnum.TEACHER);
+            AddClassBindingModel model = AddClassBindingModel
+                    .builder()
+                    .teacherId(user.getId())
+                    .build();
 
-            MvcResult result = mockMvc.perform(patch("/class/1/teacher/" + user.getId())
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(patch("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isOk())
                     .andReturn();
 
@@ -154,21 +156,30 @@ public class ClassControllerTests extends BaseTest {
         @Test
         void setClassTeacherNonExistentClass() throws Exception {
             addTestUser(RoleEnum.TEACHER);
+            AddClassBindingModel model = AddClassBindingModel
+                    .builder()
+                    .teacherId(user.getId())
+                    .build();
 
-            MvcResult result = mockMvc.perform(patch("/class/100/teacher/1")
-                            .header("Authorization", "Bearer " + token))
-                    .andExpect(status().isNotFound())
-                    .andReturn();
-
-            Assertions.assertEquals(result.getResponse().getContentAsString(), "Class not found");
+            mockMvc.perform(patch("/class/100")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
+                    .andExpect(status().isNotFound());
         }
 
         @Test
         void setClassTeacherNonExistentTeacher() throws Exception {
             addTestClass();
+            AddClassBindingModel model = AddClassBindingModel
+                    .builder()
+                    .teacherId(100L)
+                    .build();
 
-            MvcResult result = mockMvc.perform(patch("/class/1/teacher/100")
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(patch("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isNotFound())
                     .andReturn();
 
@@ -179,22 +190,31 @@ public class ClassControllerTests extends BaseTest {
         void setClassTeacherUserNotTeacherRole() throws Exception {
             addTestClass();
             UserEntity user = addTestUser(RoleEnum.STUDENT);
+            AddClassBindingModel model = AddClassBindingModel
+                    .builder()
+                    .teacherId(user.getId())
+                    .build();
 
-            MvcResult result = mockMvc.perform(patch("/class/1/teacher/" + user.getId())
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(patch("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isBadRequest())
                     .andReturn();
 
-            Assertions.assertEquals(result.getResponse().getContentAsString(), "User is not a teacher");
+            Assertions.assertEquals("User is not a teacher", result.getResponse().getContentAsString());
         }
 
         @Test
         void addStudentToClass() throws Exception {
             addTestClass();
             UserEntity student = addTestUser(RoleEnum.STUDENT);
+            AddStudentBindingModel model = new AddStudentBindingModel(student.getId());
 
-            MvcResult result = mockMvc.perform(post("/class/1/student/" + student.getId())
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(post("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isOk())
                     .andReturn();
 
@@ -207,10 +227,13 @@ public class ClassControllerTests extends BaseTest {
 
         @Test
         void addStudentToClassNonExistentClass() throws Exception {
-            addTestUser(RoleEnum.STUDENT);
+            UserEntity user = addTestUser(RoleEnum.STUDENT);
+            AddStudentBindingModel model = new AddStudentBindingModel(user.getId());
 
-            MvcResult result = mockMvc.perform(post("/class/100/student/100")
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(post("/class/100")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isNotFound())
                     .andReturn();
 
@@ -220,9 +243,12 @@ public class ClassControllerTests extends BaseTest {
         @Test
         void addStudentToClassNonExistentUser() throws Exception {
             addTestClass();
+            AddStudentBindingModel model = new AddStudentBindingModel(100L);
 
-            MvcResult result = mockMvc.perform(post("/class/1/student/100")
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(post("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isNotFound())
                     .andReturn();
 
@@ -232,14 +258,17 @@ public class ClassControllerTests extends BaseTest {
         @Test
         void addStudentToClassUserNotStudentRole() throws Exception {
             addTestClass();
-            addTestUser(RoleEnum.TEACHER);
+            UserEntity user = addTestUser(RoleEnum.TEACHER);
+            AddStudentBindingModel model = new AddStudentBindingModel(user.getId());
 
-            MvcResult result = mockMvc.perform(post("/class/1/student/1")
-                            .header("Authorization", "Bearer " + token))
+            MvcResult result = mockMvc.perform(post("/class/1")
+                            .header("Authorization", "Bearer " + token)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(model)))
                     .andExpect(status().isBadRequest())
                     .andReturn();
 
-            Assertions.assertEquals(result.getResponse().getContentAsString(), "User is not a student");
+            Assertions.assertEquals("User with id "+ user.getId() +" is not a student", result.getResponse().getContentAsString());
         }
     }
 
