@@ -8,6 +8,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.bindingModels.AddClassBindingModel;
+import org.studentmanagement.data.bindingModels.AddStudentBindingModel;
 import org.studentmanagement.data.entities.ClassEntity;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
@@ -38,8 +39,9 @@ public class ClassServiceImpl implements ClassService {
         this.classRepository = classRepository;
         this.modelMapper = modelMapper;
         this.userService = userService;
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.getValidator();
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            validator = validatorFactory.getValidator();
+        }
     }
 
     @Override
@@ -83,38 +85,67 @@ public class ClassServiceImpl implements ClassService {
     }
 
     @Override
-    public ClassViewModel setTeacher(Long classId, Long teacherId)
+    public ClassViewModel updateClass(Long classId, AddClassBindingModel classBindingModel)
+            throws EntityNotFoundException, RoleRequirementViolationException {
+        ClassEntity classEntity = getClassEntity(classId);
+
+        if (classBindingModel.getTeacherId() != null) {
+            setTeacher(classEntity, classBindingModel.getTeacherId());
+        }
+
+        if (classBindingModel.getStudentIds() != null) {
+            clearStudentsOfClass(classEntity);
+
+            for (Long studentId : classBindingModel.getStudentIds()) {
+                addStudent(classEntity, studentId);
+            }
+        }
+
+        return modelMapper.map(classEntity, ClassViewModel.class);
+    }
+
+    private void clearStudentsOfClass(ClassEntity classEntity) throws EntityNotFoundException {
+        classEntity.setStudents(new ArrayList<>());
+
+        classRepository.save(classEntity);
+    }
+
+    private void setTeacher(ClassEntity classEntity, Long teacherId)
             throws EntityNotFoundException, RoleRequirementViolationException {
         UserEntity user = userService.getUserEntity(teacherId);
 
         if (user.getRole().equals(RoleEnum.TEACHER)) {
-            ClassEntity classEntity = getClassEntity(classId);
             classEntity.setTeacher(user);
             classRepository.save(classEntity);
-
-            return modelMapper.map(classEntity, ClassViewModel.class);
+        } else {
+            throw new RoleRequirementViolationException("User is not a teacher");
         }
-
-        throw new RoleRequirementViolationException("User is not a teacher");
+    }
+    @Override
+    public ClassViewModel addStudent(Long classId, AddStudentBindingModel studentBindingModel)
+            throws EntityNotFoundException, RoleRequirementViolationException {
+        ClassEntity classEntity = getClassEntity(classId);
+        addStudent(classEntity, studentBindingModel.getStudentId());
+        return modelMapper.map(classEntity, ClassViewModel.class);
     }
 
-    @Override
-    public ClassViewModel addStudent(Long classId, Long studentId)
-            throws EntityNotFoundException, RoleRequirementViolationException {
+    private void addStudent(ClassEntity classEntity, Long studentId)
+            throws RoleRequirementViolationException, EntityNotFoundException {
         UserEntity user = userService.getUserEntity(studentId);
 
         if (user.getRole().equals(RoleEnum.STUDENT)) {
-            ClassEntity classEntity = getClassEntity(classId);
             classEntity.addStudent(user);
             classRepository.save(classEntity);
-
-            return modelMapper.map(classEntity, ClassViewModel.class);
+        } else {
+            throw new RoleRequirementViolationException(getUserIsNotAStudentErrorText(studentId));
         }
+    }
 
-        throw new RoleRequirementViolationException("User is not a student");
+    private String getUserIsNotAStudentErrorText(Long userId) {
+        return String.format("User with id %s is not a student", userId);
     }
 
     private ClassEntity getClassEntity(Long id) throws EntityNotFoundException {
-        return classRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Class not found"));
+        return classRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 }

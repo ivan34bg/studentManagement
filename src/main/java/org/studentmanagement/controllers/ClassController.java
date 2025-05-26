@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.studentmanagement.data.bindingModels.AddClassBindingModel;
+import org.studentmanagement.data.bindingModels.AddStudentBindingModel;
 import org.studentmanagement.data.viewModels.ClassViewModel;
 import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
@@ -42,17 +43,19 @@ public class ClassController {
         return new ResponseEntity<>(classViewModel, HttpStatus.OK);
     }
 
-    @PatchMapping("/{classId}/teacher/{teacherId}")
-    public ResponseEntity<ClassViewModel> setTeacherToClass(@PathVariable Long classId, @PathVariable Long teacherId)
+    @PatchMapping("/{classId}")
+    public ResponseEntity<ClassViewModel> setTeacherToClass(@PathVariable Long classId,
+                                                            @RequestBody AddClassBindingModel classBindingModel)
             throws EntityNotFoundException, RoleRequirementViolationException {
-        ClassViewModel classViewModel = classService.setTeacher(classId, teacherId);
+        ClassViewModel classViewModel = classService.updateClass(classId, classBindingModel);
         return new ResponseEntity<>(classViewModel, HttpStatus.OK);
     }
 
-    @PostMapping("/{classId}/student/{studentId}")
-    public ResponseEntity<ClassViewModel> addStudentToClass(@PathVariable Long classId, @PathVariable Long studentId)
+    @PostMapping("/{classId}")
+    public ResponseEntity<ClassViewModel> addStudentToClass(@PathVariable Long classId,
+                                                            @RequestBody AddStudentBindingModel studentModel)
             throws EntityNotFoundException, RoleRequirementViolationException {
-        ClassViewModel classViewModel = classService.addStudent(classId, studentId);
+        ClassViewModel classViewModel = classService.addStudent(classId, studentModel);
         return new ResponseEntity<>(classViewModel, HttpStatus.OK);
     }
 }

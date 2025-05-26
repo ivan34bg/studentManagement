@@ -48,8 +48,9 @@ public class UserServiceImpl implements UserService {
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
-        ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory();
-        this.validator = validatorFactory.getValidator();
+        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
+            this.validator = validatorFactory.getValidator();
+        }
     }
 
     @Override
