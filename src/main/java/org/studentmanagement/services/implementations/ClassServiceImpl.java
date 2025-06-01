@@ -68,7 +68,7 @@ public class ClassServiceImpl implements ClassService {
             default -> classes = new ArrayList<>();
         }
 
-        return classes.stream().map( classEntity -> modelMapper.map(classEntity, ClassViewModel.class)).toList();
+        return classes.stream().map(classEntity -> modelMapper.map(classEntity, ClassViewModel.class)).toList();
     }
 
     private String[] getViolationMessages(Set<ConstraintViolation<ClassEntity>> violations) {
