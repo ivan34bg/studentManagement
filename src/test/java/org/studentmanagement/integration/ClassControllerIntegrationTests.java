@@ -1,4 +1,4 @@
-package org.studentmanagement.controllers;
+package org.studentmanagement.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -22,7 +22,7 @@ import org.studentmanagement.data.repositories.ClassRepository;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.ClassViewModel;
 import org.studentmanagement.data.viewModels.UserViewModel;
-import org.studentmanagement.testUtilities.BaseTest;
+import org.studentmanagement.testUtilities.BaseIntegrationTest;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @AutoConfigureMockMvc
 @SpringBootTest
-public class ClassControllerTests extends BaseTest {
+public class ClassControllerIntegrationTests extends BaseIntegrationTest {
     @Autowired
     ClassRepository classRepository;
     @Autowired

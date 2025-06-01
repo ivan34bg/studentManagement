@@ -1,4 +1,4 @@
-package org.studentmanagement.controllers;
+package org.studentmanagement.integration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
