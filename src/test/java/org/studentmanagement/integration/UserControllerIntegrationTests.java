@@ -1,4 +1,4 @@
-package org.studentmanagement.controllers;
+package org.studentmanagement.integration;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -21,14 +21,14 @@ import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.data.repositories.UserRepository;
 import org.studentmanagement.data.viewModels.UserViewModel;
-import org.studentmanagement.testUtilities.BaseTest;
+import org.studentmanagement.testUtilities.BaseIntegrationTest;
 
 import java.util.Arrays;
 
 @AutoConfigureMockMvc
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-public class UserControllerTests extends BaseTest {
+public class UserControllerIntegrationTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired

@@ -1,4 +1,4 @@
-package org.studentmanagement.controllers;
+package org.studentmanagement.integration;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
