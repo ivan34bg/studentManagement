@@ -12,6 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @AllArgsConstructor
+@Builder
 public class ClassEntity extends BaseEntity {
     @Column(unique = true)
     @NotBlank(message = "Title should not be empty")
