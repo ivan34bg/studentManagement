@@ -1,16 +1,16 @@
 package org.studentmanagement.services.implementations;
 
-import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParserBuilder;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.datetime.DateFormatter;
 import org.springframework.stereotype.Service;
 import org.studentmanagement.data.entities.TokenEntity;
 import org.studentmanagement.data.entities.UserEntity;
 import org.studentmanagement.data.repositories.TokenRepository;
+import org.studentmanagement.providers.DateProvider;
 import org.studentmanagement.providers.JwtDataProvider;
+import org.studentmanagement.providers.TimeProvider;
 import org.studentmanagement.services.JwtTokenService;
 
 import java.time.Instant;
@@ -22,33 +22,59 @@ import java.util.Optional;
 public class JwtTokenServiceImpl implements JwtTokenService {
     private final TokenRepository tokenRepository;
     private final JwtDataProvider jwtDataProvider;
+    private final JwtBuilder jwtBuilder;
+    private final JwtParserBuilder jwtParserBuilder;
+    private final TimeProvider timeProvider;
+    private final DateProvider dateProvider;
 
     @Autowired
     public JwtTokenServiceImpl(TokenRepository tokenRepository,
-                               JwtDataProvider jwtDataProvider) {
+                               JwtDataProvider jwtDataProvider,
+                               TimeProvider timeProvider,
+                               DateProvider dateProvider) {
         this.tokenRepository = tokenRepository;
         this.jwtDataProvider = jwtDataProvider;
+        this.timeProvider = timeProvider;
+        this.dateProvider = dateProvider;
+        this.jwtBuilder = Jwts.builder();
+        this.jwtParserBuilder = Jwts.parser();
+    }
+
+    public JwtTokenServiceImpl(TokenRepository tokenRepository,
+                               JwtDataProvider jwtDataProvider,
+                               JwtBuilder jwtBuilder,
+                               JwtParserBuilder jwtParserBuilder,
+                               TimeProvider timeProvider,
+                               DateProvider dateProvider) {
+        this.tokenRepository = tokenRepository;
+        this.jwtDataProvider = jwtDataProvider;
+        this.jwtBuilder = jwtBuilder;
+        this.jwtParserBuilder = jwtParserBuilder;
+        this.timeProvider = timeProvider;
+        this.dateProvider = dateProvider;
     }
 
     @Override
     public TokenEntity generateToken(UserEntity user) {
         deleteExistingToken(user);
 
-        Instant currentTime = Instant.now();
+        Instant currentTime = timeProvider.getCurrentTime();
         Instant expirationTime = currentTime.plus(jwtDataProvider.getExpiration(), ChronoUnit.MINUTES);
+        Date issueDate = dateProvider.getDateFrom(currentTime);
+        Date expirationDate = dateProvider.getDateFrom(expirationTime);
 
-        String token = Jwts.builder()
+        String token = jwtBuilder
                 .subject(user.getEmail())
-                .issuedAt(Date.from(currentTime))
-                .expiration(Date.from(expirationTime))
+                .issuedAt(issueDate)
+                .expiration(expirationDate)
                 .signWith(jwtDataProvider.getKey())
                 .compact();
 
         TokenEntity tokenEntity = new TokenEntity(
                 user,
                 token,
-                Date.from(currentTime),
-                Date.from(expirationTime)
+                issueDate,
+                expirationDate
         );
 
         tokenRepository.save(tokenEntity);
@@ -65,11 +91,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     public Boolean validateToken(String token) {
         try {
             innerValidateToken(token);
-        } catch (MalformedJwtException |
-                 SecurityException |
-                 ExpiredJwtException |
-                 IllegalArgumentException |
-                 SignatureException ex) {
+        } catch (RuntimeException e) {
             invalidateToken(token);
             return false;
         }
@@ -79,13 +101,13 @@ public class JwtTokenServiceImpl implements JwtTokenService {
 
     private void innerValidateToken(String token) {
         String email = getSubject(token);
-        TokenEntity tokenEntity = tokenRepository.findTokenEntityByTokenAndUserEmail(token, email)
+        TokenEntity tokenEntity = tokenRepository
+                .findTokenEntityByTokenAndUserEmail(token, email)
                 .orElseThrow(IllegalArgumentException::new);
 
-        Instant currentTime = Instant.now();
+        Instant currentTime = timeProvider.getCurrentTime();
 
         if (tokenEntity.getExpirationDate().toInstant().isBefore(currentTime)) {
-            tokenRepository.delete(tokenEntity);
             throw new IllegalArgumentException();
         }
     }
@@ -97,11 +119,12 @@ public class JwtTokenServiceImpl implements JwtTokenService {
 
     @Override
     public void invalidateToken(String token) {
-        tokenRepository.findTokenEntityByToken(token).ifPresent(tokenRepository::delete);
+        tokenRepository.findTokenEntityByToken(token)
+                .ifPresent(tokenRepository::delete);
     }
 
     private String getSubject(String token) {
-        return Jwts.parser()
+        return jwtParserBuilder
                 .verifyWith(jwtDataProvider.getSecretKey())
                 .build()
                 .parseSignedClaims(token)
