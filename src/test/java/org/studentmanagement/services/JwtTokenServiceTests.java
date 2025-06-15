@@ -27,7 +27,7 @@ import java.util.Date;
 import java.util.Optional;
 
 @SpringBootTest
-public class JwtTokenServiceTests {
+class JwtTokenServiceTests {
     @Mock
     private TokenRepository tokenRepository;
     @Mock

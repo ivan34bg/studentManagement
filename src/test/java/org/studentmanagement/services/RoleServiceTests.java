@@ -8,7 +8,7 @@ import org.studentmanagement.data.enums.RoleEnum;
 import org.studentmanagement.services.implementations.RoleServiceImpl;
 
 @SpringBootTest
-public class RoleServiceTests {
+class RoleServiceTests {
     RoleService roleService;
 
     @BeforeEach
@@ -17,7 +17,7 @@ public class RoleServiceTests {
     }
 
     @Test
-    public void testGetRoles() {
+    void testGetRoles() {
         RoleEnum[] result = roleService.getRoles();
 
         Assertions.assertArrayEquals(result, RoleEnum.values());
