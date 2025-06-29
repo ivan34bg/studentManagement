@@ -16,7 +16,6 @@ public interface UserService {
             throws UserEntityUniqueConstraintViolationException,
             FieldConstraintViolationException;
     LoginUserViewModel login(LoginBindingModel loginBindingModel) throws EntityNotFoundException;
-    void logout(String token);
     UserViewModel getUser(Long id) throws EntityNotFoundException;
     UserViewModel setUserRole(Long userId, String roleName) throws EntityNotFoundException;
     UserEntity getUserEntity(Long id) throws EntityNotFoundException;

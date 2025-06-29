@@ -1,9 +1,7 @@
 package org.studentmanagement.services.implementations;
 
 import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
 import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +22,7 @@ import org.studentmanagement.exceptions.EntityNotFoundException;
 import org.studentmanagement.exceptions.FieldConstraintViolationException;
 import org.studentmanagement.exceptions.UserEntityUniqueConstraintViolationException;
 import org.studentmanagement.services.JwtTokenService;
+import org.studentmanagement.services.RoleService;
 import org.studentmanagement.services.UserService;
 
 import java.util.Set;
@@ -36,21 +35,23 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
+    private final RoleService roleService;
 
     @Autowired
     public UserServiceImpl(UserRepository userRepository,
                            ModelMapper modelMapper,
+                           Validator validator,
                            AuthenticationManager authenticationManager,
                            PasswordEncoder passwordEncoder,
-                           JwtTokenService jwtTokenService) {
+                           JwtTokenService jwtTokenService,
+                           RoleService roleService) {
         this.userRepository = userRepository;
         this.modelMapper = modelMapper;
         this.authenticationManager = authenticationManager;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
-        try (ValidatorFactory validatorFactory = Validation.buildDefaultValidatorFactory()) {
-            this.validator = validatorFactory.getValidator();
-        }
+        this.validator = validator;
+        this.roleService = roleService;
     }
 
     @Override
@@ -103,11 +104,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void logout(String token) {
-        jwtTokenService.invalidateToken(token);
-    }
-
-    @Override
     public UserViewModel getUser(Long id) throws EntityNotFoundException {
         UserEntity user = getUserEntity(id);
         return modelMapper.map(user, UserViewModel.class);
@@ -116,7 +112,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserViewModel setUserRole(Long userId, String roleName) throws EntityNotFoundException {
         try {
-            RoleEnum role = RoleEnum.valueOf(roleName);
+            RoleEnum role = roleService.getRole(roleName);
             UserEntity user = getUserEntity(userId);
 
             user.setRole(role);
